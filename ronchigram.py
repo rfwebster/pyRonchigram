@@ -6,7 +6,6 @@ from matplotlib import cm
 from scipy.ndimage import zoom
 
 
-
 # calc probe shape: https://www.sciencedirect.com/science/article/pii/S0304399199001941?via%3Dihub
 # Krivanek notation: https://www.sciencedirect.com/science/article/pii/S0304399199000133
 # http://ronchigram.com/introduction_to_the_ronchigram_and_its_calculation_with_ronchigramcom.pdf
@@ -16,20 +15,20 @@ from scipy.ndimage import zoom
 class Aberrations():
     def __init__(self):
         self.n = np.array([1, 1, 2, 2, 3, 3, 3, 4, 4, 4,
-                          5, 5, 5, 5])  # aberration order
+                           5, 5, 5, 5])  # aberration order
         # degree (rotational symmetry)
         self.m = np.array([0, 2, 1, 3, 0, 2, 4, 1, 3, 5, 0, 2, 4, 6])
         # amp
-        self.Cnm = np.array([-7e-9,    # defocus, O2
-                             -.849e-9,    # 2-fold Stig, A2
-                             1.38e-9,   # Axial Coma, P3
-                             1.59e-9,   # 3-fold Stig, A3
+        self.Cnm = np.array([-7e-9,  # defocus, O2
+                             -.849e-9,  # 2-fold Stig, A2
+                             1.38e-9,  # Axial Coma, P3
+                             1.59e-9,  # 3-fold Stig, A3
                              195.8e-9,  # 3rd Order Spherical, O4
                              -118e-9,  # 3rd Order Axial Star, Q4
                              65.1e-9,  # 4-fold Stig, A4
-                             2.23e-6,    # 4th Order Axial Coma, P5
-                             -6.13e-6,    # 3-Lobe Aberration, R5,
-                             -7.44e-6,    # 5-fold Stig, A5
+                             2.23e-6,  # 4th Order Axial Coma, P5
+                             -6.13e-6,  # 3-Lobe Aberration, R5,
+                             -7.44e-6,  # 5-fold Stig, A5
                              -0.201e-3,  # 5th Order Spherical, O6
                              0.131e-3,  # 5th Order Axial Star
                              0.001e-3,  # 5th Order Rosette
@@ -37,20 +36,20 @@ class Aberrations():
                              ])  # all in m
 
         # angle
-        self.phinm = np.array([0,     # defocus
-                               -13.56,    # 2-fold Stig
-                               115.94,    # Axial Coma
-                               6.86,    # 3-fold Stig
-                               0.,       # 3rd Order Spherical
-                               65.87,    # 3rd Order Axial Star
-                               10.87,    # 4-fold Stig
-                               -62.01,    # 4th Order Axial Coma
-                               -50.62,    # 3-Lobe Aberration
-                               10.46,    # 5-fold Stig
-                               0.,       # 5th Order Spherical
-                               0.,    # 5th Order Axial Star
-                               0.,    # 5th Order Rosette
-                               -2.71,    # 6-fold Stig
+        self.phinm = np.array([0,  # defocus
+                               -13.56,  # 2-fold Stig
+                               115.94,  # Axial Coma
+                               6.86,  # 3-fold Stig
+                               0.,  # 3rd Order Spherical
+                               65.87,  # 3rd Order Axial Star
+                               10.87,  # 4-fold Stig
+                               -62.01,  # 4th Order Axial Coma
+                               -50.62,  # 3-Lobe Aberration
+                               10.46,  # 5-fold Stig
+                               0.,  # 5th Order Spherical
+                               0.,  # 5th Order Axial Star
+                               0.,  # 5th Order Rosette
+                               -2.71,  # 6-fold Stig
                                ])  # all in degrees
         self.phinm = np.radians(self.phinm)  # convert to radians
 
@@ -140,7 +139,6 @@ class Ronchigram:
         self.aberrations.Cnm[12] = np.random.uniform(-5e-6, 5e-6)
         self.aberrations.phinm[12] = np.random.uniform(0, 360)
 
-
     def calc_wav(self, kev):
         """Returns the wavelength for a given accelerating voltage
 
@@ -154,7 +152,7 @@ class Ronchigram:
         float
             Wavelegth in m
         """
-        self.wav = 1.23986e-9 / (np.sqrt(kev*(2*510.998+kev)))
+        self.wav = 1.23986e-9 / (np.sqrt(kev * (2 * 510.998 + kev)))
 
     def calc_chi(self):
         """ Returns the aberation function
@@ -176,9 +174,8 @@ class Ronchigram:
             m = self.aberrations.m[k]
             Cnm = self.aberrations.Cnm[k]
             phinm = self.aberrations.phinm[k]
-            chi = chi + Cnm*np.cos(m*(self.phi-phinm))*self.rho**(n)/(n)
-        self.chi = 2/10* np.pi/self.wav * chi
-
+            chi = chi + Cnm * np.cos(m * (self.phi - phinm)) * self.rho ** (n) / (n)
+        self.chi = 2 / 10 * np.pi / self.wav * chi
 
     def calc_probe(self):
         """ Returns the probe function for a given aberation fn and CL Apt
@@ -191,31 +188,31 @@ class Ronchigram:
         -------
         the probe
         """
-        exp = np.exp(-1j * self.chi)*self.cl_apt
+        exp = np.exp(-1j * self.chi) * self.cl_apt
         psi_p = ifft2(exp)
-        self.probe = np.abs(ifftshift(psi_p))**2
+        self.probe = np.abs(ifftshift(psi_p)) ** 2
 
     def calc_ronchigram(self):
         exp = np.exp(-1j * self.chi)
         psi_r = ifft2(exp)
         psi_r = ifftshift(psi_r)
 
-        rand = np.random.rand(int(self.imdim/self.factor), int(self.imdim/self.factor))
-        #plt.imshow(rand)
+        rand = np.random.rand(int(self.imdim / self.factor), int(self.imdim / self.factor))
+        # plt.imshow(rand)
 
-        rand = zoom(rand, self.factor, order = 0)
-        #plt.imshow(rand)
+        rand = zoom(rand, self.factor, order=0)
+        # plt.imshow(rand)
 
         V_x = self.sigma * self.t * self.V * rand
 
         T_x = np.exp(-1j * V_x)
-        I_q = fft2(psi_r*T_x)
-        #I_q = fftshift(I_q)
-        I_q = np.abs(I_q)**2
-        self.ronchigram = I_q # * self.cl_apt
+        I_q = fft2(psi_r * T_x)
+        # I_q = fftshift(I_q)
+        I_q = np.abs(I_q) ** 2
+        self.ronchigram = I_q  # * self.cl_apt
 
     def plot_phase(self):
-        e = self.simdim*1e3
+        e = self.simdim * 1e3
         fig, ax = plt.subplots(1, 1)
         ax.imshow(np.mod(self.chi, 2 * np.pi),
                   extent=[-e, e, -e, e]
@@ -223,7 +220,7 @@ class Ronchigram:
         plt.show()
 
     def plot_probe(self):
-        e = self.imdim/self.simdim*self.wav*(1/(np.pi))
+        e = self.imdim / self.simdim * self.wav * (1 / (np.pi))
         fig, ax = plt.subplots(1, 1)
         ax.imshow(self.probe,
                   extent=[-e, e, -e, e],
@@ -231,14 +228,14 @@ class Ronchigram:
         plt.show()
 
     def plot_ronchigram(self):
-        e = self.simdim*1e3
+        e = self.simdim * 1e3
         fig, ax = plt.subplots(1, 1)
         ax.imshow(self.ronchigram, extent=[-e, e, -e, e], cmap=cm.Greys)
         plt.show()
 
 
-if __name__ == "__main__" :
-    #print(f'Wavelength = \t {calc_wav(acc):.4} m')
+if __name__ == "__main__":
+    # print(f'Wavelength = \t {calc_wav(acc):.4} m')
     ronch = Ronchigram(300)
     ronch.plot_phase()
     # plot_probe(calc_probe(calc_chi(aber)))
